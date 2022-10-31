@@ -119,6 +119,7 @@ export class TimeSeriesDatabase {
         const colorSource = new ColorSource();
         return Array.from(metricSetMetrics).map(([metricKey, timeSeries]) => {
             const visibleTimeSeries = TimeSeriesUtils.sliceAndDownsample(timeSeries, startTime, endTime);
+            // const visibleTimeSeries = timeSeries.slice(startTime, endTime);
             return new MetricData(metricKey, colorSource.getNextColor(), true, visibleTimeSeries.getEventList());
         });
     }

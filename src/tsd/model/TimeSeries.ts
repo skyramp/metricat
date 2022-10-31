@@ -125,6 +125,8 @@ export class TimeSeries {
         const downsampledTs = new TimeSeries();
 
         let windowStart = this.timeIndices[0].getTime();
+        windowStart -= windowStart % windowSize.asMilliseconds()
+
         let windowEnd = windowStart + windowSize.asMilliseconds();
 
         let currentWindowEvents: TimeEvent[] = [];
@@ -152,9 +154,15 @@ export class TimeSeries {
     private getMeanEvent(events: TimeEvent[]): TimeEvent | undefined {
         if (events.length === 0) return undefined;
         if (events.length === 1) return events[0];
-        events.sort(event => event.value);
-        const medianEvent = events[Math.floor(events.length / 2)];
-        return medianEvent;
+        // events.sort(event => event.value);
+        // const medianEvent = events[Math.floor(events.length / 2)];
+        // return medianEvent;
+
+        const sumTime = events.map(ev=>ev.time.getTime()).reduce((partialSum, a) => partialSum + a, 0);
+        const avgTime = new Date(sumTime/events.length);
+        const sumValue = events.map(ev=>ev.value).reduce((partialSum, a) => partialSum + a, 0);
+        const avgValue = sumValue/events.length
+        return new TimeEvent(avgTime, avgValue)
     }
 
     /**

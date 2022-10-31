@@ -14,10 +14,13 @@ import { round } from "@/utils/MathUtils";
 import { TimePeriod } from "@/models/TimePeriod";
 import { PeriodType } from "@/models/PeriodType";
 import { ViewMode } from "@/models/ViewMode";
+import {MetricSetType} from "@/models/MetricSetType";
+import {TimeEvent} from "@/tsd/model/TimeEvent";
 
 @Component({
   components: { BaseLineChart }
 })
+
 export default class MetricLineChart extends Vue {
   get options() {
     const store: Store<MetricsState> = this.$store;
@@ -113,8 +116,10 @@ export default class MetricLineChart extends Vue {
   }
 
   get metricData() {
+    const zip = (a, b) => a.map((k, i) => [k, b[i]]);
+
     const store: Store<MetricsState> = this.$store;
-    const datasets = store.state.currentMetricData.map(data => {
+    let datasets = store.state.currentMetricData.map(data => {
       return {
         fill: false,
         label: data.metricKey,
@@ -123,10 +128,31 @@ export default class MetricLineChart extends Vue {
         borderWidth: 1,
         pointRadius: 1,
         data: data.metricSeries.slice(1).map((metricPoint,ei) => {
-          return { t: metricPoint.time, y: store.state.viewMode===ViewMode.DIFF?Math.max(0, metricPoint.value - data.metricSeries[ei].value):metricPoint.value };
+          return { t: metricPoint.time, y: store.state.viewMode===ViewMode.DIFF?metricPoint.value - data.metricSeries[ei].value:metricPoint.value };
         })
       };
     });
+
+    if(store.state.currentMetricData && store.state.currentMetricSet && store.state.currentMetricSet.type === MetricSetType.SUMMARY && store.state.viewMode===ViewMode.DIFF) {
+      const sumVec = store.state.currentMetricData.find((data=>data.metricKey.endsWith("-#summary_sum")))
+      const countVec = store.state.currentMetricData.find((data=>data.metricKey.endsWith("-#summary_count")))
+      if(sumVec && countVec && sumVec.metricSeries.length === countVec.metricSeries.length) {
+        const zipVec = zip(sumVec.metricSeries, countVec.metricSeries)
+        const avgVec = zipVec.slice(1).map(([mp1, mp2], ei)=>{return new TimeEvent(mp1.time, (mp1.value - zipVec[ei][0].value)/((mp2.value - zipVec[ei][1].value) || 1))})
+        datasets.push({
+          fill: false,
+          label: "average",
+          borderColor: "#efc050",
+          backgroundColor: "#efc050",
+          borderWidth: 1,
+          pointRadius: 1,
+          data: avgVec.map((metricPoint,ei) => {
+            return { t: metricPoint.time, y: metricPoint.value };
+          })
+        })
+      }
+    }
+
     return { datasets: datasets };
   }
 }
