@@ -14,6 +14,7 @@ import { TimePeriod } from '@/models/TimePeriod'
 import { PeriodType } from '@/models/PeriodType'
 import { PeriodicUpdatePluginFactory } from '@/tsd/PeriodicUpdatePluginFactory'
 import { TimeSeriesUtils } from '@/tsd/TimeSeriesUtils'
+import { ViewMode } from "@/models/ViewMode";
 
 Vue.use(Vuex)
 
@@ -29,7 +30,7 @@ export default new Vuex.Store<MetricsState>({
   strict: true,
 
   state: {
-    endpointUrl: "http://demo.robustperception.io:9100/metrics",
+    endpointUrl: "http://127.0.0.1:9100/metrics",
     intervalMillis: 1000,
     recordingId: null,
     metricSets: [],
@@ -39,6 +40,7 @@ export default new Vuex.Store<MetricsState>({
     scrapeFailureCount: 0,
     period: TimeSeriesUtils.getPeriodFromType(PeriodType.LAST_1_MIN, new TimePeriod(null, null)),
     periodType: PeriodType.LAST_1_MIN,
+    viewMode: ViewMode.RAW
   },
 
   getters: {
@@ -123,6 +125,9 @@ export default new Vuex.Store<MetricsState>({
     [Mutations.SET_CURRENT_TIME_PERIOD_TYPE](state: MetricsState, periodType: PeriodType) {
       state.periodType = periodType;
     },
+    [Mutations.SET_CURRENT_VIEW_MODE](state: MetricsState, viewMode: ViewMode) {
+      state.viewMode = viewMode;
+    },
   },
 
   actions: {
@@ -186,6 +191,16 @@ export default new Vuex.Store<MetricsState>({
         commit(Mutations.SET_CURRENT_TIME_PERIOD, currentPeriod);
         const data = tsd.getMetricSetData(currentMetricSetName, this.state.period);
         commit(Mutations.SET_CURRENT_METRIC_DATA, data);
+      }
+    },
+
+    /**
+     * User selected view mode.
+     */
+    [Actions.UPDATE_VIEW_MODE]({ commit }, viewMode: ViewMode) {
+      const currentMetricSetName = this.state.currentMetricSet?.name;
+      if (currentMetricSetName) {
+        commit(Mutations.SET_CURRENT_VIEW_MODE, viewMode);
       }
     },
 

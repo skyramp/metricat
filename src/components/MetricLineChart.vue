@@ -13,6 +13,7 @@ import { MetricData } from "@/models/MetricData";
 import { round } from "@/utils/MathUtils";
 import { TimePeriod } from "@/models/TimePeriod";
 import { PeriodType } from "@/models/PeriodType";
+import { ViewMode } from "@/models/ViewMode";
 
 @Component({
   components: { BaseLineChart }
@@ -121,8 +122,8 @@ export default class MetricLineChart extends Vue {
         backgroundColor: data.color,
         borderWidth: 1,
         pointRadius: 1,
-        data: data.metricSeries.map(metricPoint => {
-          return { t: metricPoint.time, y: metricPoint.value };
+        data: data.metricSeries.slice(1).map((metricPoint,ei) => {
+          return { t: metricPoint.time, y: store.state.viewMode===ViewMode.DIFF?Math.max(0, metricPoint.value - data.metricSeries[ei].value):metricPoint.value };
         })
       };
     });

@@ -27,6 +27,16 @@
                 <strong>To:</strong>
                 {{periodEnd}}
               </div>
+              <div class="col-auto">
+                <b-form-select v-model="viewMode" size="sm">
+                  <b-form-select-option
+                      v-for="vm in viewModes"
+                      :key="vm.value"
+                      :value="vm.value"
+                      :disabled="vm.disabled"
+                  >{{vm.label}}</b-form-select-option>
+                </b-form-select>
+              </div>
             </div>
           </form>
         </div>
@@ -116,6 +126,7 @@ import { MetricsState } from "@/store/MetricsState";
 import { MetricData } from "@/models/MetricData";
 import { PeriodType, periodTypeLabels } from "@/models/PeriodType";
 import { TimePeriod } from "@/models/TimePeriod";
+import { ViewMode, viewModeLabels } from '@/models/ViewMode';
 
 @Component({
   components: {
@@ -189,6 +200,30 @@ export default class MetricsPage extends Vue {
       };
     });
   }
+
+  get viewModes(): any[] {
+    return Object.keys(ViewMode).map(viewModeString => {
+      const viewModeEnum: string =
+          ViewMode[viewModeString as keyof ViewMode];
+      return {
+        value: viewModeString,
+        label: viewModeEnum,
+        disabled: false
+      };
+    });
+  }
+
+  get viewMode(): string {
+    const store: Store<MetricsState> = this.$store;
+    return viewModeLabels.get(store.state.viewMode.toString());
+  }
+
+  set viewMode(selected: string) {
+    const store: Store<MetricsState> = this.$store;
+    const viewMode: ViewMode = ViewMode[selected as keyof ViewMode];
+    store.dispatch(Actions.UPDATE_VIEW_MODE, viewMode);
+  }
+
 
   get periodType(): string {
     const store: Store<MetricsState> = this.$store;
